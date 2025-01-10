@@ -1,6 +1,7 @@
 package com.example.utils;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.example.entity.BaseDetail;
 import com.example.entity.ConnectionConfig;
 import com.example.entity.Response;
 import jakarta.annotation.Resource;
@@ -33,6 +34,15 @@ public class NetUtils {
         return response.success();
     }
 
+    public void updateClientDetail(BaseDetail detail) {
+        Response response = this.doPost("/detail",detail);
+        if (response.success()) {
+            log.info("基本信息已更新完成");
+        }else {
+            log.info("基本信息更新失败{}",response.message());
+        }
+    }
+
     private Response doGet(String url) {
         return this.doGet(url, config.getAddress(), config.getToken());
     }
@@ -47,6 +57,22 @@ public class NetUtils {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             return JSONObject.parseObject(response.body()).to(Response.class);
 
+        } catch (Exception e) {
+            log.error("在向服务器发起请求时出错",e);
+            return Response.errorResponse(e);
+        }
+    }
+
+    private Response doPost(String url, Object data) {
+        try{
+            String rawData = JSONObject.from(data).toJSONString();
+            HttpRequest request = HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(rawData))
+                    .uri(new URI(config.getAddress() + "/monitor" + url))
+                    .header("Authorization", config.getToken())
+                    .header("Content-Type", "application/json")
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return JSONObject.parseObject(response.body()).to(Response.class);
         } catch (Exception e) {
             log.error("在向服务器发起请求时出错",e);
             return Response.errorResponse(e);
