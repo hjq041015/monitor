@@ -41,8 +41,8 @@ spring:
       mail-limit: 60
     flow:
       period: 3
-      limit: 10
-      block: 30
+      limit: 5
+      block: 100
     cors:
       origin: '*'
       credentials: false
