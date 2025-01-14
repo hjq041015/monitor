@@ -4,10 +4,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.Client;
 import com.example.entity.dto.ClientDetail;
-import com.example.entity.dto.RuntimeData;
 import com.example.entity.vo.request.ClientDetailVO;
 import com.example.entity.vo.request.RenameClientVO;
+import com.example.entity.vo.request.RenameNodeVO;
 import com.example.entity.vo.request.RuntimeDetailVO;
+import com.example.entity.vo.response.ClientDetailsVO;
 import com.example.entity.vo.response.ClientPreviewVO;
 import com.example.mapper.ClientDetailMapper;
 import com.example.mapper.ClientMapper;
@@ -19,7 +20,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.sql.Wrapper;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -99,7 +99,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
             ClientPreviewVO vo = client.asViewObject(ClientPreviewVO.class);
             BeanUtils.copyProperties(clientDetailMapper.selectById(client.getId()),vo);
             RuntimeDetailVO runtime = currentRuntime.get(client.getId());
-            if (runtime != null &&  System.currentTimeMillis() -  runtime.getTimestamp() < 60 *1000 ) {
+            if ( isOnline(runtime)) {
                 BeanUtils.copyProperties(runtime,vo);
                 vo.setOnline(true);
             }
@@ -111,6 +111,25 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     public void renameClient(RenameClientVO vo) {
         this.update(Wrappers.<Client>update().eq("id",vo.getId()).set("name",vo.getName()));
         this.initClientCache();
+    }
+
+    @Override
+    public void renameNode(RenameNodeVO vo) {
+        this.update(Wrappers.<Client>update().eq("id",vo.getId())
+                .set("node",vo.getNode()).set("location",vo.getLocation()));
+        this.initClientCache();
+    }
+
+    @Override
+    public ClientDetailsVO details(int clientId) {
+      ClientDetailsVO vo =  ClientIdCache.get(clientId).asViewObject(ClientDetailsVO.class);
+      BeanUtils.copyProperties(clientDetailMapper.selectById(clientId),vo);
+      vo.setOnline(this.isOnline(currentRuntime.get(clientId)));
+      return vo;
+    }
+
+    private Boolean isOnline(RuntimeDetailVO runtime) {
+       return   runtime != null &&  System.currentTimeMillis() -  runtime.getTimestamp() < 60 *1000;
     }
 
     private void addClientCache(Client client) {
