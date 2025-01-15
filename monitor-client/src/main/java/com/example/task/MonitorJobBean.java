@@ -7,18 +7,20 @@ import jakarta.annotation.Resource;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
+import org.springframework.stereotype.Component;
 
+@Component
 public class MonitorJobBean extends QuartzJobBean {
 
     @Resource
-    MonitorUtils utils;
+    MonitorUtils monitor;
 
     @Resource
     NetUtils net;
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        RuntimeDetail detail = utils.monitorRunTimeDetail();
-        net.updateRuntimeDetail(detail);
+        RuntimeDetail runtimeDetail = monitor.monitorRuntimeDetail();
+        net.updateRuntimeDetails(runtimeDetail);
     }
 }

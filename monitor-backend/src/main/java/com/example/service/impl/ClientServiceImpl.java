@@ -27,20 +27,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> implements ClientService {
 
+    private String registerToken = this.generateNewToken();
+
+    private final Map<Integer, Client> clientIdCache = new ConcurrentHashMap<>();
+    private final Map<String, Client> clientTokenCache = new ConcurrentHashMap<>();
+
     @Resource
-    ClientDetailMapper clientDetailMapper;
+    ClientDetailMapper detailMapper;
 
     @Resource
     InfluxDbUtils influx;
 
-    private String registerToken = this.generateNewToken();
-
-    private final Map<Integer,Client> ClientIdCache = new ConcurrentHashMap<>();
-    private final Map<String,Client> ClientTokenCache = new ConcurrentHashMap<>();
-
-    @PostConstruct // 在依赖注入后执行
-    private void initClientCache() {
-        // 将数据库中所有数据遍历然后分别添加到不同的缓存中去
+    @PostConstruct
+    public void initClientCache() {
+        clientTokenCache.clear();
+        clientIdCache.clear();
         this.list().forEach(this::addClientCache);
     }
 
@@ -50,58 +51,57 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     }
 
     @Override
-    public Boolean verifyAndRegister(String token) {
-        if (registerToken.equals(token)) {
-            int id = RandomClientId();
-            Client client = new Client(id,"未注册主机",token,"cn","未命名节点",new Date());
-            if (save(client)) {
+    public Client findClientById(int id) {
+        return clientIdCache.get(id);
+    }
+
+    @Override
+    public Client findClientByToken(String token) {
+        return clientTokenCache.get(token);
+    }
+
+    @Override
+    public boolean verifyAndRegister(String token) {
+        if (this.registerToken.equals(token)) {
+            int id = this.randomClientId();
+            Client client = new Client(id, "未命名主机", token, "cn", "未命名节点", new Date());
+            if (this.save(client)) {
                 registerToken = this.generateNewToken();
+                this.addClientCache(client);
                 return true;
             }
         }
         return false;
     }
 
-
-    @Override
-    public Client findClientById(int id) {
-        return ClientIdCache.get(id);
-    }
-
-    @Override
-    public Client findClientByToken(String token) {
-        return ClientTokenCache.get(token);
-    }
-
     @Override
     public void updateClientDetail(ClientDetailVO vo, Client client) {
         ClientDetail detail = new ClientDetail();
-        BeanUtils.copyProperties(vo,detail);
+        BeanUtils.copyProperties(vo, detail);
         detail.setId(client.getId());
-        if (Objects.nonNull(clientDetailMapper.selectById(client.getId()))) {
-            clientDetailMapper.updateById(detail);
-        }else {
-            clientDetailMapper.insert(detail);
+        if(Objects.nonNull(detailMapper.selectById(client.getId()))) {
+            detailMapper.updateById(detail);
+        } else {
+            detailMapper.insert(detail);
         }
-
     }
 
-    private Map<Integer,RuntimeDetailVO> currentRuntime = new ConcurrentHashMap<>();
+    private final Map<Integer, RuntimeDetailVO> currentRuntime = new ConcurrentHashMap<>();
 
     @Override
     public void updateRuntimeDetail(RuntimeDetailVO vo, Client client) {
-        currentRuntime.put(client.getId(),vo);
-        influx.writeRuntimeData(client.getId(),vo);
+        currentRuntime.put(client.getId(), vo);
+        influx.writeRuntimeData(client.getId(), vo);
     }
 
     @Override
-    public List<ClientPreviewVO> listAllClient() {
-        return ClientIdCache.values().stream().map(client -> {
+    public List<ClientPreviewVO> listClients() {
+        return clientIdCache.values().stream().map(client -> {
             ClientPreviewVO vo = client.asViewObject(ClientPreviewVO.class);
-            BeanUtils.copyProperties(clientDetailMapper.selectById(client.getId()),vo);
+            BeanUtils.copyProperties(detailMapper.selectById(vo.getId()), vo);
             RuntimeDetailVO runtime = currentRuntime.get(client.getId());
-            if ( isOnline(runtime)) {
-                BeanUtils.copyProperties(runtime,vo);
+            if(this.isOnline(runtime)) {
+                BeanUtils.copyProperties(runtime, vo);
                 vo.setOnline(true);
             }
             return vo;
@@ -110,52 +110,58 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     @Override
     public void renameClient(RenameClientVO vo) {
-        this.update(Wrappers.<Client>update().eq("id",vo.getId()).set("name",vo.getName()));
+        this.update(Wrappers.<Client>update().eq("id", vo.getId()).set("name", vo.getName()));
         this.initClientCache();
     }
 
     @Override
     public void renameNode(RenameNodeVO vo) {
-        this.update(Wrappers.<Client>update().eq("id",vo.getId())
-                .set("node",vo.getNode()).set("location",vo.getLocation()));
+        this.update(Wrappers.<Client>update().eq("id", vo.getId())
+                .set("node", vo.getNode()).set("location", vo.getLocation()));
         this.initClientCache();
     }
 
     @Override
-    public RuntimeHistoryVO clientRuntimeHistory(int clientId) {
-        RuntimeHistoryVO vo = influx.readRuntimeData(clientId);
-        ClientDetail detail = clientDetailMapper.selectById(clientId);
-        BeanUtils.copyProperties(detail,vo);
+    public ClientDetailsVO clientDetails(int clientId) {
+        ClientDetailsVO vo = this.clientIdCache.get(clientId).asViewObject(ClientDetailsVO.class);
+        BeanUtils.copyProperties(detailMapper.selectById(clientId), vo);
+        vo.setOnline(this.isOnline(currentRuntime.get(clientId)));
         return vo;
     }
 
     @Override
-    public RuntimeDetailVO clientRuntimeNow(int clientId) {
-            return currentRuntime.get(clientId);
+    public RuntimeHistoryVO clientRuntimeDetailsHistory(int clientId) {
+        RuntimeHistoryVO vo = influx.readRuntimeData(clientId);
+        ClientDetail detail = detailMapper.selectById(clientId);
+        BeanUtils.copyProperties(detail, vo);
+        return vo;
     }
 
     @Override
-    public ClientDetailsVO details(int clientId) {
-      ClientDetailsVO vo =  ClientIdCache.get(clientId).asViewObject(ClientDetailsVO.class);
-      BeanUtils.copyProperties(clientDetailMapper.selectById(clientId),vo);
-      vo.setOnline(this.isOnline(currentRuntime.get(clientId)));
-      return vo;
+    public RuntimeDetailVO clientRuntimeDetailsNow(int clientId) {
+        return currentRuntime.get(clientId);
     }
 
-    private Boolean isOnline(RuntimeDetailVO runtime) {
-       return   runtime != null &&  System.currentTimeMillis() -  runtime.getTimestamp() < 60 *1000;
+    @Override
+    public void deleteClient(int clientId) {
+        this.removeById(clientId);
+        detailMapper.deleteById(clientId);
+        this.initClientCache();
+        currentRuntime.remove(clientId);
+    }
+
+    private boolean isOnline(RuntimeDetailVO runtime) {
+        return runtime != null && System.currentTimeMillis() - runtime.getTimestamp() < 60 * 1000;
     }
 
     private void addClientCache(Client client) {
-        ClientTokenCache.put(client.getToken(), client);
-        ClientIdCache.put(client.getId(), client);
-
+        clientIdCache.put(client.getId(), client);
+        clientTokenCache.put(client.getToken(), client);
     }
 
-    private int RandomClientId() {
+    private int randomClientId() {
         return new Random().nextInt(90000000) + 10000000;
     }
-
 
     private String generateNewToken() {
         String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -163,7 +169,6 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         StringBuilder sb = new StringBuilder(24);
         for (int i = 0; i < 24; i++)
             sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
-        System.out.println(sb);
         return sb.toString();
     }
 }

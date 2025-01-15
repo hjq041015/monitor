@@ -1,7 +1,6 @@
 package com.example.entity.vo.response;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.google.gson.JsonObject;
 import lombok.Data;
 
 import java.util.LinkedList;

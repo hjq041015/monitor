@@ -13,20 +13,17 @@ import com.example.entity.vo.response.RuntimeHistoryVO;
 import java.util.List;
 
 public interface ClientService extends IService<Client> {
-    Boolean verifyAndRegister(String token);
     String registerToken();
     Client findClientById(int id);
     Client findClientByToken(String token);
+    boolean verifyAndRegister(String token);
     void updateClientDetail(ClientDetailVO vo, Client client);
     void updateRuntimeDetail(RuntimeDetailVO vo, Client client);
-    List<ClientPreviewVO> listAllClient();
-    void  renameClient(RenameClientVO vo);
-    ClientDetailsVO details(int clientId);
+    List<ClientPreviewVO> listClients();
+    void renameClient(RenameClientVO vo);
     void renameNode(RenameNodeVO vo);
-    RuntimeHistoryVO clientRuntimeHistory(int clientId);
-    RuntimeDetailVO clientRuntimeNow(int clientId);
-
-
-
-
+    ClientDetailsVO clientDetails(int clientId);
+    RuntimeHistoryVO clientRuntimeDetailsHistory(int clientId);
+    RuntimeDetailVO clientRuntimeDetailsNow(int clientId);
+    void deleteClient(int clientId);
 }

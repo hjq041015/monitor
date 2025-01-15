@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-
 @Data
 @TableName("db_client_detail")
 public class ClientDetail {
@@ -20,4 +19,3 @@ public class ClientDetail {
     double disk;
     String ip;
 }
-

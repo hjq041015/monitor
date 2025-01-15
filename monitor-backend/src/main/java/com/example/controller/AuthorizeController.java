@@ -44,8 +44,6 @@ public class AuthorizeController {
                 accountService.registerEmailVerifyCode(type, String.valueOf(email), request.getRemoteAddr()));
     }
 
-
-
     /**
      * 执行密码重置确认，检查验证码是否正确
      * @param vo 密码重置信息

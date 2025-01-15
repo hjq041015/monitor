@@ -6,15 +6,14 @@ import org.quartz.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
-
 @Slf4j
 @Configuration
 public class QuartzConfiguration {
+
     @Bean
     public JobDetail jobDetailFactoryBean() {
         return JobBuilder.newJob(MonitorJobBean.class)
-                .withIdentity("monitor_task")
+                .withIdentity("monitor-task")
                 .storeDurably()
                 .build();
     }
@@ -24,7 +23,7 @@ public class QuartzConfiguration {
         CronScheduleBuilder cron = CronScheduleBuilder.cronSchedule("*/10 * * * * ?");
         return TriggerBuilder.newTrigger()
                 .forJob(detail)
-                .withIdentity("monitor_trigger")
+                .withIdentity("monitor-trigger")
                 .withSchedule(cron)
                 .build();
     }

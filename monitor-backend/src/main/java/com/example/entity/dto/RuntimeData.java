@@ -27,5 +27,4 @@ public class RuntimeData {
     double diskRead;
     @Column
     double diskWrite;
-
 }

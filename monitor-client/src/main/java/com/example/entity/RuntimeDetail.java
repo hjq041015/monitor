@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class RuntimeDetail {
-   long timestamp;
+    long timestamp;
     double cpuUsage;
     double memoryUsage;
     double diskUsage;
@@ -14,7 +14,4 @@ public class RuntimeDetail {
     double networkDownload;
     double diskRead;
     double diskWrite;
-
-
-
 }

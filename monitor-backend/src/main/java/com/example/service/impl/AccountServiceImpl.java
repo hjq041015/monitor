@@ -83,7 +83,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
     }
 
-
     /**
      * 邮件验证码重置密码操作，需要检查验证码是否正确
      * @param info 重置基本信息
@@ -156,5 +155,4 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .eq("email", text)
                 .one();
     }
-
 }

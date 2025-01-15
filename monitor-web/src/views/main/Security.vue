@@ -3,7 +3,9 @@
 </script>
 
 <template>
-我是安全管理
+  <div>
+    我是安全管理
+  </div>
 </template>
 
 <style scoped>

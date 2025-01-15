@@ -1,6 +1,5 @@
 import axios from "axios";
 import {ElMessage} from "element-plus";
-import router from "@/router";
 
 const authItemName = "authorize"
 
@@ -12,12 +11,7 @@ const accessHeader = () => {
 
 const defaultError = (error) => {
     console.error(error)
-    const status = error.response.status
-    if (status === 429) {
-        ElMessage.error(error.response.data.message)
-    } else {
-        ElMessage.error('发生了一些错误，请联系管理员')
-    }
+    ElMessage.error('发生了一些错误，请联系管理员')
 }
 
 const defaultFailure = (message, status, url) => {
@@ -49,37 +43,26 @@ function storeAccessToken(remember, token, expire){
         sessionStorage.setItem(authItemName, str)
 }
 
-function deleteAccessToken(redirect = false) {
+function deleteAccessToken() {
     localStorage.removeItem(authItemName)
     sessionStorage.removeItem(authItemName)
-    if(redirect) {
-        router.push({ name: 'welcome-login' })
-    }
 }
 
 function internalPost(url, data, headers, success, failure, error = defaultError){
     axios.post(url, data, { headers: headers }).then(({data}) => {
-        if(data.code === 200) {
+        if(data.code === 200)
             success(data.data)
-        } else if(data.code === 401) {
-            failure('登录状态已过期，请重新登录！')
-            deleteAccessToken(true)
-        } else {
+        else
             failure(data.message, data.code, url)
-        }
     }).catch(err => error(err))
 }
 
 function internalGet(url, headers, success, failure, error = defaultError){
     axios.get(url, { headers: headers }).then(({data}) => {
-        if(data.code === 200) {
+        if(data.code === 200)
             success(data.data)
-        } else if(data.code === 401) {
-            failure('登录状态已过期，请重新登录！')
-            deleteAccessToken(true)
-        } else {
+        else
             failure(data.message, data.code, url)
-        }
     }).catch(err => error(err))
 }
 

@@ -13,8 +13,7 @@ const router = createRouter({
                     path: '',
                     name: 'welcome-login',
                     component: () => import('@/views/welcome/LoginPage.vue')
-                },
-                {
+                }, {
                     path: 'forget',
                     name: 'welcome-forget',
                     component: () => import('@/views/welcome/ForgetPage.vue')

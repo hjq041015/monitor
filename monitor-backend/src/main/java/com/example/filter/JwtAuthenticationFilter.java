@@ -39,29 +39,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
         String uri = request.getRequestURI();
-        if (uri.startsWith("/monitor")) {
+        if(uri.startsWith("/monitor")) {
             if(!uri.endsWith("/register")) {
                 Client client = service.findClientByToken(authorization);
-                if (client == null) {
+                if(client == null) {
                     response.setStatus(401);
-                    response.getWriter().write(RestBean.failure(401,"未注册").asJsonString());
+                    response.setCharacterEncoding("utf-8");
+                    response.getWriter().write(RestBean.failure(401, "未注册").asJsonString());
                     return;
-                }else {
-                    request.setAttribute(Const.ATTR_CLIENT,client);
+                } else {
+                    request.setAttribute(Const.ATTR_CLIENT, client);
                 }
             }
-        }else {
+        } else {
             DecodedJWT jwt = utils.resolveJwt(authorization);
-        if(jwt != null) {
-            UserDetails user = utils.toUser(jwt);
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            request.setAttribute(Const.ATTR_USER_ID, utils.toId(jwt));
+            if(jwt != null) {
+                UserDetails user = utils.toUser(jwt);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                request.setAttribute(Const.ATTR_USER_ID, utils.toId(jwt));
+            }
         }
-        }
-
         filterChain.doFilter(request, response);
     }
 }

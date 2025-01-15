@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.entity.BaseData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import java.util.Date;
 
+import java.util.Date;
 
 @Data
 @TableName("db_client")
