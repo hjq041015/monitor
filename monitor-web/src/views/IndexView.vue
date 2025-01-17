@@ -1,3 +1,42 @@
+<script setup>
+import { logout } from '@/net'
+import router from "@/router";
+import {Back, Moon, Sunny} from "@element-plus/icons-vue";
+import {ref} from "vue";
+import {useDark} from "@vueuse/core";
+import TabItem from "@/component/TabItem.vue";
+import {useRoute} from "vue-router";
+import {useStore} from "@/store";
+
+const route = useRoute()
+const dark = ref(useDark())
+const tabs = [
+  {id: 1, name: '管理', route: 'manage'},
+  {id: 2, name: '安全', route: 'security'}
+]
+const defaultIndex = () => {
+  for (let tab of tabs) {
+    if(route.name === tab.route)
+      return tab.id
+  }
+  return 1
+}
+const tab = ref(defaultIndex())
+function changePage(item) {
+  tab.value = item.id
+  router.push({name: item.route})
+}
+
+function userLogout() {
+  logout(() => router.push("/"))
+}
+
+const store = useStore()
+</script>
+
+
+
+
 <template>
   <el-container class="main-container">
     <el-header class="main-header">
@@ -10,6 +49,14 @@
                    v-model="dark" active-color="#424242"
                    :active-action-icon="Moon"
                    :inactive-action-icon="Sunny"/>
+          <div style="text-align: right;line-height: 16px;margin-right: 10px">
+          <div>
+            <el-tag type="success" v-if="store.isAdmin" size="small">管理员</el-tag>
+            <el-tag v-else size="small">子账户</el-tag>
+            {{store.user.username}}
+          </div>
+          <div style="font-size: 13px;color: grey">{{store.user.email}}</div>
+        </div>
         <el-dropdown>
           <el-avatar class="avatar"
                      src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
@@ -37,38 +84,7 @@
   </el-container>
 </template>
 
-<script setup>
-import { logout } from '@/net'
-import router from "@/router";
-import {Back, Moon, Sunny} from "@element-plus/icons-vue";
-import {ref} from "vue";
-import {useDark} from "@vueuse/core";
-import TabItem from "@/component/TabItem.vue";
-import {useRoute} from "vue-router";
 
-const route = useRoute()
-const dark = ref(useDark())
-const tabs = [
-  {id: 1, name: '管理', route: 'manage'},
-  {id: 2, name: '安全', route: 'security'}
-]
-const defaultIndex = () => {
-  for (let tab of tabs) {
-    if(route.name === tab.route)
-      return tab.id
-  }
-  return 1
-}
-const tab = ref(defaultIndex())
-function changePage(item) {
-  tab.value = item.id
-  router.push({name: item.route})
-}
-
-function userLogout() {
-  logout(() => router.push("/"))
-}
-</script>
 
 <style scoped>
 .main-container {
