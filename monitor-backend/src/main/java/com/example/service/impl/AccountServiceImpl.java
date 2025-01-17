@@ -1,5 +1,6 @@
 package com.example.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.Account;
 import com.example.entity.vo.request.ConfirmResetVO;
@@ -18,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Wrapper;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -113,6 +115,16 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if(code == null) return "请先获取验证码";
         if(!code.equals(info.getCode())) return "验证码错误，请重新输入";
         return null;
+    }
+
+    @Override
+    public Boolean changePassword(int id, String oldPassword, String newPassword) {
+        Account account = this.getById(id);
+        if (!passwordEncoder.matches(oldPassword,account.getPassword()))
+            return false;
+        this.update(Wrappers.<Account>update().eq("id", id)
+                .set("password",passwordEncoder.encode(newPassword)));
+        return true;
     }
 
     /**
