@@ -109,6 +109,7 @@ public class JwtUtils {
         try {
             DecodedJWT verify = jwtVerifier.verify(token);
             if(this.isInvalidToken(verify.getId())) return null;
+            if(this.isInvalidAccount(verify.getClaim("id").asInt())) return null;
             Map<String, Claim> claims = verify.getClaims();
             return new Date().after(claims.get("exp").asDate()) ? null : verify;
         } catch (JWTVerificationException e) {
@@ -161,6 +162,16 @@ public class JwtUtils {
             return null;
         return headerToken.substring(7);
     }
+
+    private boolean deleteAccount(int uid) {
+        template.opsForValue().set(Const.USER_BLACK_LIST + uid, "", expire, TimeUnit.HOURS);
+        return true;
+    }
+
+    private boolean isInvalidAccount(int uid) {
+       return Boolean.TRUE.equals(template.hasKey(Const.USER_BLACK_LIST + uid));
+    }
+
 
     /**
      * 将Token列入Redis黑名单中
