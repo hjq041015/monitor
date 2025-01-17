@@ -41,10 +41,9 @@ public class UserController {
         return RestBean.success();
     }
 
-    @GetMapping("/sub/list")
-    public RestBean<List<SubAccountVO>> listSubAccount() {
-        service.listSubAccount();
-        return RestBean.success();
+     @GetMapping("/sub/list")
+    public RestBean<List<SubAccountVO>> subAccountList() {
+        return RestBean.success(service.listSubAccount());
     }
 
 }
