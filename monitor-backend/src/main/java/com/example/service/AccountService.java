@@ -3,10 +3,7 @@ package com.example.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.entity.BaseData;
 import com.example.entity.dto.Account;
-import com.example.entity.vo.request.ChangePasswordVO;
-import com.example.entity.vo.request.ConfirmResetVO;
-import com.example.entity.vo.request.CreateSubAccountVO;
-import com.example.entity.vo.request.EmailResetVO;
+import com.example.entity.vo.request.*;
 import com.example.entity.vo.response.SubAccountVO;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
@@ -21,4 +18,5 @@ public interface AccountService extends IService<Account>, UserDetailsService {
     void createSubAccount(CreateSubAccountVO vo);
     void deleteSubAccount(int uid);
     List<SubAccountVO> listSubAccount();
+    String modifyEmail(int userId, ModifyEmailVO vo);
 }

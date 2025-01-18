@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.ChangePasswordVO;
 import com.example.entity.vo.request.CreateSubAccountVO;
+import com.example.entity.vo.request.ModifyEmailVO;
 import com.example.entity.vo.response.SubAccountVO;
 import com.example.service.AccountService;
 import com.example.utils.Const;
@@ -44,6 +45,15 @@ public class UserController {
      @GetMapping("/sub/list")
     public RestBean<List<SubAccountVO>> subAccountList() {
         return RestBean.success(service.listSubAccount());
+    }
+
+    @PostMapping("/modify-email")
+    public RestBean<Void> modifyEmail(@RequestAttribute(Const.ATTR_USER_ID) int userid,
+                                      @RequestBody @Valid ModifyEmailVO vo) {
+        String result = service.modifyEmail(userid, vo);
+        if (result == null)
+            return RestBean.success();
+        return RestBean.failure(401,result);
     }
 
 }

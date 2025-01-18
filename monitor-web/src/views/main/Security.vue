@@ -40,7 +40,12 @@ const rules = {
   new_password_repeat: [
     { required: true, message: '请重复输入新的密码', trigger: 'blur' },
     { validator: validatePassword, trigger: ['blur', 'change'] },
+       ],
+  email: [
+    { required: true, message: '请输入邮件地址', trigger: 'blur' },
+    {type: 'email', message: '请输入合法的电子邮件地址', trigger: ['blur', 'change']}
   ]
+
 }
 
 function resetPassword() {
@@ -76,6 +81,43 @@ function deleteAccount(id) {
     })
 }
 
+const emailForm = reactive({
+  email: store.user.email,
+  code: ''
+})
+
+const coldTime = ref(0)
+const isEmailValid = ref(true)
+
+const onEmailValidate = (prop, isValid) => {
+  if(prop === 'email')
+    isEmailValid.value = isValid
+}
+
+const validateEmail = () => {
+  coldTime.value = 60
+  let handle;
+  get(`/api/auth/ask-code?email=${emailForm.email}&type=modify`, () => {
+    ElMessage.success(`验证码已发送到邮箱: ${emailForm.email}，请注意查收`)
+    handle = setInterval(() => {
+      coldTime.value--
+      if(coldTime.value === 0) {
+        clearInterval(handle)
+      }
+    }, 1000)
+  }, (message) => {
+    ElMessage.warning(message)
+    coldTime.value = 0
+  })
+}
+
+function modifyEmail() {
+  post('/api/user/modify-email', emailForm, () => {
+    ElMessage.success('邮件修改成功')
+    logout(() => router.push('/'))
+  })
+}
+
 </script>
 
 <template>
@@ -105,7 +147,31 @@ function deleteAccount(id) {
         </el-form>
       </div>
       <div class="info-card" style="margin-top: 10px">
-
+             <div class="title"><i class="fa-regular fa-envelope"></i> 电子邮件设置</div>
+        <el-divider style="margin: 10px 0"/>
+        <el-form :model="emailForm" label-position="top" :rules="rules"
+                 ref="emailFormRef" @validate="onEmailValidate" style="margin: 0 10px 10px 10px">
+          <el-form-item label="电子邮件" prop="email">
+            <el-input v-model="emailForm.email"/>
+          </el-form-item>
+          <el-form-item>
+            <el-row style="width: 100%" :gutter="10">
+              <el-col :span="18">
+                <el-input placeholder="请获取验证码" v-model="emailForm.code"/>
+              </el-col>
+              <el-col :span="6">
+                <el-button type="success" @click="validateEmail" style="width: 100%;"
+                           :disabled="!isEmailValid || coldTime > 0">
+                  {{coldTime > 0 ? '请稍后 ' + coldTime + ' 秒' : '获取验证码'}}
+                </el-button>
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <div>
+            <el-button @click="modifyEmail" :disabled="!emailForm.email"
+                       :icon="Refresh" type="success">保存电子邮件</el-button>
+          </div>
+        </el-form>
       </div>
     </div>
     <div class="info-card" style="flex: 50%">

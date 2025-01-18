@@ -38,7 +38,7 @@ public class AuthorizeController {
     @GetMapping("/ask-code")
     @Operation(summary = "请求邮件验证码")
     public RestBean<Void> askVerifyCode(@RequestParam @Email String email,
-                                        @RequestParam @Pattern(regexp = "(reset)")  String type,
+                                        @RequestParam @Pattern(regexp = "(reset|modify)")  String type,
                                         HttpServletRequest request){
         return this.messageHandle(() ->
                 accountService.registerEmailVerifyCode(type, String.valueOf(email), request.getRemoteAddr()));
@@ -66,6 +66,7 @@ public class AuthorizeController {
         return this.messageHandle(() ->
                 accountService.resetEmailAccountPassword(vo));
     }
+
 
     /**
      * 针对于返回值为String作为错误信息的方法进行统一处理
