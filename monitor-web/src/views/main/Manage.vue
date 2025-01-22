@@ -7,6 +7,7 @@ import RegisterCard from "@/component/RegisterCard.vue";
 import {Plus} from "@element-plus/icons-vue";
 import {useRoute} from "vue-router";
 import {useStore} from "@/store";
+import TerminalWindow from "@/component/TerminalWindow.vue";
 
 const locations = [
   {name: 'cn', desc: '中国大陆'},
@@ -20,16 +21,16 @@ const locations = [
 const checkedNodes = ref([])
 
 const list = ref([])
+const store = useStore()
 
 const route = useRoute()
 
 const updateList = () => {
-    if (route.name === 'manage') {
-         get('/api/monitor/list', data => list.value = data)
-    }
+  if(route.name === 'manage') {
+    get('/api/monitor/list', data => list.value = data)
+  }
 }
 setInterval(updateList, 10000)
-
 updateList()
 
 const detail = reactive({
@@ -55,7 +56,15 @@ const register = reactive({
 })
 const refreshToken = () => get('/api/monitor/register', token => register.token = token)
 
-const store = useStore()
+function openTerminal(id) {
+  terminal.show = true
+  terminal.id = id
+  detail.show = false
+}
+const terminal = reactive({
+  show: false,
+  id: -1
+})
 </script>
 
 <template>
@@ -66,8 +75,8 @@ const store = useStore()
         <div class="desc">在这里管理所有已经注册的主机实例，实时监控主机运行状态，快速进行管理和操作。</div>
       </div>
       <div>
-        <el-button :icon="Plus" type="primary" plain
-                   @click="register.show = true" :disabled="!store.isAdmin">添加新主机</el-button>
+        <el-button :icon="Plus" type="primary" plain :disabled="!store.isAdmin"
+                   @click="register.show = true">添加新主机</el-button>
       </div>
     </div>
     <el-divider style="margin: 10px 0"/>
@@ -86,11 +95,23 @@ const store = useStore()
     <el-empty description="还没有任何主机哦，点击右上角添加一个吧" v-else/>
     <el-drawer size="520" :show-close="false" v-model="detail.show"
                :with-header="false" v-if="list.length" @close="detail.id = -1">
-      <client-details :id="detail.id" :update="updateList" @delete="updateList"/>
+      <client-details :id="detail.id" :update="updateList" @delete="updateList" @terminal="openTerminal"/>
     </el-drawer>
     <el-drawer v-model="register.show" direction="btt" :with-header="false"
                style="width: 600px;margin: 10px auto" size="320" @open="refreshToken">
       <register-card :token="register.token"/>
+    </el-drawer>
+    <el-drawer style="width: 800px" :size="500" direction="btt"
+               v-model="terminal.show" :close-on-click-modal="false">
+      <template #header>
+        <div>
+          <div style="font-size: 18px;color: dodgerblue;font-weight: bold;">SSH远程连接</div>
+          <div style="font-size: 14px">
+            远程连接的建立将由服务端完成，因此在内网环境下也可以正常使用。
+          </div>
+        </div>
+      </template>
+      <terminal-window :id="terminal.id"/>
     </el-drawer>
   </div>
 </template>
