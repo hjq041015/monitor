@@ -65,8 +65,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 request.setAttribute(Const.ATTR_USER_ID, utils.toId(jwt));
                 request.setAttribute(Const.ATTR_USER_ROLE, new ArrayList<>(user.getAuthorities()).get(0)
                         .getAuthority());
-            }
-            if(request.getRequestURI().startsWith("/terminal/") && !accessShell(
+
+                if(request.getRequestURI().startsWith("/terminal/") && !accessShell(
                         (int) request.getAttribute(Const.ATTR_USER_ID),
                         (String) request.getAttribute(Const.ATTR_USER_ROLE),
                         Integer.parseInt(request.getRequestURI().substring(10)))) {
@@ -75,6 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     response.getWriter().write(RestBean.failure(401, "无权访问").asJsonString());
                     return;
                 }
+            }
         }
         filterChain.doFilter(request, response);
     }
